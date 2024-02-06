@@ -10,6 +10,8 @@
 #include <GLES3/gl32.h>
 
 #include "image_utils.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 static void runFSR(struct FSRConstants fsrData, uint32_t fsrProgramEASU, uint32_t fsrProgramRCAS, uint32_t fsrData_vbo, uint32_t inputImage, uint32_t outputImage) {
     uint32_t displayWidth = fsrData.output.width;
@@ -54,10 +56,31 @@ static void runFSR(struct FSRConstants fsrData, uint32_t fsrProgramEASU, uint32_
         // connect the output image which is the same as the input image
         glBindImageTexture(inFSROutputTexture, outputImage, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
+        
+
+
+
         glUseProgram(fsrProgramRCAS);
         glDispatchCompute(dispatchX, dispatchY, 1);
         glFinish();
+
+        printf("WU: output\n");
+        GLsizei nrChannels = 4;
+        GLsizei stride = nrChannels * fsrData.output.width;
+        stride += (stride % 4) ? (4 - stride % 4) : 0;
+        GLsizei bufferSize = stride * fsrData.output.height;
+        std::vector<char> buffer(bufferSize);
+        glPixelStorei(GL_PACK_ALIGNMENT, 4);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
+        //stbi_flip_vertically_on_write(true);
+        stbi_write_png("fsr_out.png", fsrData.output.width, fsrData.output.height, nrChannels, buffer.data(), stride);
+
     }
+
+    
+
+
+
 }
 
 static void runBilinear(struct FSRConstants fsrData, uint32_t bilinearProgram, int32_t fsrData_vbo, uint32_t inputImage, uint32_t outputImage) {
@@ -86,6 +109,8 @@ static void runBilinear(struct FSRConstants fsrData, uint32_t bilinearProgram, i
 
         // connect the output image
         glBindImageTexture(inFSROutputTexture, outputImage, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+        
 
         glDispatchCompute(dispatchX, dispatchY, 1);
         glFinish();
@@ -165,6 +190,19 @@ int main(int argc, char** argv) {
 
     uint32_t inputTexture = 0;
     bool ret = LoadTextureFromFile(input_image, &inputTexture, &fsrData.input.width, &fsrData.input.height);
+
+    printf("WU: input\n");
+    GLsizei nrChannels = 4;
+    GLsizei stride = nrChannels * fsrData.input.width;
+    stride += (stride % 4) ? (4 - stride % 4) : 0;
+    GLsizei bufferSize = stride * fsrData.input.height;
+    std::vector<char> buffer(bufferSize);
+    glPixelStorei(GL_PACK_ALIGNMENT, 4);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
+    //stbi_flip_vertically_on_write(true);
+    stbi_write_png("input.png", fsrData.input.width, fsrData.input.height, nrChannels, buffer.data(), stride);
+
+
     IM_ASSERT(ret);
 
     fsrData.output = { fsrData.input.width * resMultiplier, fsrData.input.height * resMultiplier };
@@ -202,6 +240,7 @@ int main(int argc, char** argv) {
     ImVec4 clear_color{0.1f, 0.1f, 0.1f, 1.0f};
 
 
+    int i=0;
     while (!glfwWindowShouldClose(window))
     {
         // Start the Dear ImGui frame
@@ -250,6 +289,9 @@ int main(int argc, char** argv) {
 
                     printf("Running FSR\n");
                     runFSR(fsrData, fsrProgramEASU, fsrProgramRCAS, fsrData_vbo, inputTexture, outputImage);
+
+                    
+
                 }
             }
 

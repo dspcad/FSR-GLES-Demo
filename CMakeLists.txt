@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.2.0)
 project (gles_fsr_demo C CXX)
 
+find_package(OpenGL REQUIRED)
+find_package(PNG REQUIRED)
+
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -10,6 +14,9 @@ message("Using GLFW: thirdparty/")
 set(GLFW3_LIBRARIES glfw)
 
 include(thirdparty/modules.cmake)
+include_directories(
+        ${PNG_INCLUDE_DIR}
+)
 
 find_package(PkgConfig REQUIRED)
 #find_package(glfw3 3.3 REQUIRED)
@@ -24,7 +31,7 @@ add_executable(gles_fsr
     ${IMGUI_BASE_DIR}/imgui_demo.cpp
 )
 
-target_link_libraries(gles_fsr PRIVATE glfw imgui_base EGL GLESv2)
+target_link_libraries(gles_fsr PRIVATE glfw imgui_base EGL GLESv2 ${OPENGL_LIBRARY} ${PNG_LIBRARY})
 target_compile_options(gles_fsr PRIVATE -DIMGUI_IMPL_OPENGL_ES3)
 
 target_include_directories(gles_fsr PRIVATE

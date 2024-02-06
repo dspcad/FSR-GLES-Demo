@@ -1,4 +1,4 @@
-
+#include <fstream>
 #include <GLES3/gl32.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -147,8 +147,9 @@ static uint32_t compileProgram(const std::string& source) {
     return compute_program;
 }
 
-static std::string buildShader(const std::vector<std::string>& headers, const std::vector<std::string>& filenames, const std::map<std::string, std::string>& defines)
+static std::string buildShader(const std::vector<std::string>& headers, const std::vector<std::string>& filenames, const std::map<std::string, std::string>& defines, std::string out_f)
 {
+
     std::stringstream out;
     for (const std::string& header : headers) {
         out << header << std::endl;
@@ -168,6 +169,10 @@ static std::string buildShader(const std::vector<std::string>& headers, const st
         out << (const char*)data.get() << std::endl;
     }
 
+    std::ofstream ofs;
+    ofs.open(out_f);
+    ofs << out.str();
+    ofs.close();
     return out.str();
 }
 
@@ -195,7 +200,7 @@ uint32_t createFSRComputeProgramEAUS(const std::string& baseDir) {
         //"#extension GL_GOOGLE_include_directive : enable",
     };
 
-    std::string shader = buildShader(header, files, defines);
+    std::string shader = buildShader(header, files, defines, "eaus.shader");
 
 
     return compileProgram(shader);
@@ -225,7 +230,7 @@ uint32_t createFSRComputeProgramRCAS(const std::string& baseDir) {
         //"#extension GL_GOOGLE_include_directive : enable",
     };
 
-    std::string shader = buildShader(header, files, defines);
+    std::string shader = buildShader(header, files, defines, "rcas.shader");
 
     return compileProgram(shader);
 }
@@ -255,7 +260,7 @@ uint32_t createBilinearComputeProgram(const std::string& baseDir) {
         //"#extension GL_GOOGLE_include_directive : enable",
     };
 
-    std::string shader = buildShader(header, files, defines);
+    std::string shader = buildShader(header, files, defines, "bilinear.shader");
 
     return compileProgram(shader);
 }
